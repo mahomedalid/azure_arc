@@ -400,15 +400,25 @@ New-NetFirewallRule -Name BlockAzureIMDS -DisplayName "Block access to Azure IMD
 Write-Host "`n"
 Write-Host "Onboarding the Azure VM to Azure Arc..."
 
+Write-Host "Downloading AzureConnectedMachineAgent ..."
+
 # Download the package
 function download1() { $ProgressPreference = "SilentlyContinue"; Invoke-WebRequest -Uri https://aka.ms/AzureConnectedMachineAgent -OutFile AzureConnectedMachineAgent.msi }
 download1
 
+Write-Host "Installing AzureConnectedMachineAgent ..."
+
 # Install the package
 msiexec /i AzureConnectedMachineAgent.msi /l*v installationlog.txt /qn | Out-String
 
+Write-Host "Getting cluster name ..."
+
 #Tag
 $clusterName = "$env:computername-$env:kubernetesDistribution"
+
+Write-Host "Cluster name $clusterName"
+
+Write-Host "Running connect command"
 
 # Run connect command
 & "$env:ProgramFiles\AzureConnectedMachineAgent\azcmagent.exe" connect `
@@ -420,6 +430,8 @@ $clusterName = "$env:computername-$env:kubernetesDistribution"
     --subscription-id $env:subscriptionId `
     --tags "Project=jumpstart_azure_arc_servers" "AKSEE=$clusterName"`
     --correlation-id "d009f5dd-dba8-4ac7-bac9-b54ef3a6671a"
+
+Write-Host "Changing client VM wallpaper ..."
 
 # Changing to Client VM wallpaper
 $imgPath = "C:\Temp\wallpaper.png"
@@ -441,13 +453,18 @@ namespace Win32{
 add-type $code 
 [Win32.Wallpaper]::SetWallpaper($imgPath)
 
+Write-Host "Stopping process monitoring kubectl get pods ..."
+
 # Kill the open PowerShell monitoring kubectl get pods
 Stop-Process -Id $kubectlMonShell.Id
 
 # Removing the LogonScript Scheduled Task so it won't run on next reboot
-Unregister-ScheduledTask -TaskName "LogonScript" -Confirm:$false
-Start-Sleep -Seconds 5
+#Unregister-ScheduledTask -TaskName "LogonScript" -Confirm:$false
+#Write-Host "Sleeping 5 seconds..."
+#Start-Sleep -Seconds 5
 
-Stop-Process -Name powershell -Force
+#Write-Host "Stopping powershell process ..."
+#Stop-Process -Name powershell -Force
 
+Write-Host "Stop transcript ..."
 Stop-Transcript
