@@ -417,6 +417,7 @@ Write-Host "Getting cluster name ..."
 $clusterName = "$env:computername-$env:kubernetesDistribution"
 
 Write-Host "Cluster name $clusterName"
+Write-Host "K8s distribution $kubernetesDistribution"
 
 Write-Host "Running connect command"
 
